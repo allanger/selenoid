@@ -49,37 +49,37 @@ func (k *Kubernetes) StartWithCancel() (*StartedService, error) {
 							Protocol:      apiv1.ProtocolTCP,
 							ContainerPort: 4444,
 						},
-						//{
-						//	Name:          "vnc",
-						//	Protocol:      "TCP",
-						//	ContainerPort: 5900,
-						//},
-						//{
-						//	Name:          "devtools",
-						//	Protocol:      "TCP",
-						//	ContainerPort: 7070,
-						//},
-						//{
-						//	Name:          "fileserver",
-						//	Protocol:      "TCP",
-						//	ContainerPort: 8080,
-						//},
-						//{
-						//	Name:          "clipboard",
-						//	Protocol:      "TCP",
-						//	ContainerPort: 9090,
-						//},
+						{
+							Name:          "vnc",
+							Protocol:      "TCP",
+							ContainerPort: 5900,
+						},
+						{
+							Name:          "devtools",
+							Protocol:      "TCP",
+							ContainerPort: 7070,
+						},
+						{
+							Name:          "fileserver",
+							Protocol:      "TCP",
+							ContainerPort: 8080,
+						},
+						{
+							Name:          "clipboard",
+							Protocol:      "TCP",
+							ContainerPort: 9090,
+						},
 					},
-					//							Args: []string{
-					//								"-session-attempt-timeout",
-					//								"240s",
-					//								"-service-startup-timeout",
-					//								"240s",
-					//							},
+					Args: []string{
+						"-session-attempt-timeout",
+						"240s",
+						"-service-startup-timeout",
+						"240s",
+					},
 					LivenessProbe: &apiv1.Probe{
 						ProbeHandler: apiv1.ProbeHandler{
 							HTTPGet: &apiv1.HTTPGetAction{
-								Port: intstr.FromString(k.Service.Port),
+								Port: intstr.FromString("browser"),
 								Path: k.Service.Path,
 							},
 						},
@@ -87,7 +87,7 @@ func (k *Kubernetes) StartWithCancel() (*StartedService, error) {
 					ReadinessProbe: &apiv1.Probe{
 						ProbeHandler: apiv1.ProbeHandler{
 							HTTPGet: &apiv1.HTTPGetAction{
-								Port: intstr.FromString(k.Service.Port),
+								Port: intstr.FromString("browser"),
 								Path: k.Service.Path,
 							},
 						},
@@ -104,16 +104,16 @@ func (k *Kubernetes) StartWithCancel() (*StartedService, error) {
 	ready := false
 	for !ready {
 		log.Printf("[KUBERNETES_BACKEND] Waiting for the pod to be ready")
-		time.Sleep(60 * time.Second)
+		time.Sleep(10 * time.Second)
 		ready = true
 		statuses := pod.Status.ContainerStatuses
 		for _, status := range statuses {
 			if !status.Ready {
 				ready = false
-				continue
 			}
 		}
 	}
+	log.Printf("[KUBERNETES_BACKEND] Pod is ready")
 
 	svcClient := clientset.CoreV1().Services(k.Environment.KubernetesNamespace)
 	service := &apiv1.Service{
@@ -131,30 +131,25 @@ func (k *Kubernetes) StartWithCancel() (*StartedService, error) {
 					Port:     4444,
 				},
 				{
-					Name:     "http",
+					Name:     "vnc",
 					Protocol: "TCP",
-					Port:     80,
+					Port:     5900,
 				},
-				//{
-				//	Name:     "vnc",
-				//	Protocol: "TCP",
-				//	Port:     5900,
-				//},
-				//{
-				//	Name:     "devtools",
-				//	Protocol: "TCP",
-				//	Port:     7070,
-				//},
-				//{
-				//	Name:     "fileserver",
-				//	Protocol: "TCP",
-				//	Port:     8080,
-				//},
-				//{
-				//	Name:     "clipboard",
-				//	Protocol: "TCP",
-				//	Port:     9090,
-				//},
+				{
+					Name:     "devtools",
+					Protocol: "TCP",
+					Port:     7070,
+				},
+				{
+					Name:     "fileserver",
+					Protocol: "TCP",
+					Port:     8080,
+				},
+				{
+					Name:     "clipboard",
+					Protocol: "TCP",
+					Port:     9090,
+				},
 			},
 		},
 	}
